@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Devenir un Monstre du Closing — Sécurité</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --green: #00ffaa;
+      --blue: #0ea5e9;
+      --red: #ff4757;
+      --bg: #080e1a;
+      --surface: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.07);
+      --text: #c8d4e8;
+      --white: #f0f4ff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.75;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE TEXTURE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 999; opacity: .4;
+    }
+
+    /* ── PROGRESS BAR ── */
+    #progress-bar {
+      position: fixed; top: 0; left: 0; height: 3px;
+      background: linear-gradient(90deg, var(--green), var(--blue));
+      z-index: 1000; width: 0%; transition: width .1s linear;
+    }
+
+    /* ── SIDEBAR NAV ── */
+    #nav {
+      position: fixed; left: 0; top: 0; bottom: 0; width: 240px;
+      background: rgba(8,14,26,0.97);
+      border-right: 1px solid var(--border);
+      padding: 30px 0;
+      display: flex; flex-direction: column;
+      z-index: 900;
+      backdrop-filter: blur(20px);
+      transition: transform .3s ease;
+    }
+
+    .nav-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--green);
+      padding: 0 24px 28px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-links {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 0;
+      scrollbar-width: none;
+    }
+
+    .nav-links a {
+      display: block;
+      padding: 9px 24px;
+      font-size: 13px;
+      color: #6b7fa3;
+      text-decoration: none;
+      transition: .2s;
+      border-left: 2px solid transparent;
+      font-weight: 400;
+    }
+
+    .nav-links a:hover, .nav-links a.active {
+      color: var(--white);
+      border-left-color: var(--green);
+      background: rgba(0,255,170,0.05);
+    }
+
+    .nav-section-label {
+      padding: 14px 24px 4px;
+      font-size: 10px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #374561;
+      font-weight: 600;
+    }
+
+    .nav-annuaire {
+      margin: 16px 16px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, rgba(0,255,170,0.1), rgba(14,165,233,0.08));
+      border: 1px solid rgba(0,255,170,0.25);
+      border-radius: 12px;
+      color: var(--green);
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: .25s;
+      letter-spacing: .01em;
+    }
+
+    .nav-annuaire:hover {
+      background: linear-gradient(135deg, rgba(0,255,170,0.18), rgba(14,165,233,0.14));
+      border-color: rgba(0,255,170,0.5);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0,255,170,0.1);
+    }
+
+    .nav-annuaire-icon { font-size: 16px; flex-shrink: 0; }
+    .nav-annuaire-arrow { margin-left: auto; opacity: .5; font-size: 11px; }
+
+    .nav-back {
+      margin: 10px 16px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: #374561;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      transition: .25s;
+      letter-spacing: .01em;
+    }
+
+    .nav-back:hover {
+      border-color: rgba(255,255,255,0.15);
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    #nav-toggle {
+      display: none;
+      position: fixed; top: 16px; left: 16px;
+      z-index: 1001;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--green);
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    /* ── MAIN CONTENT ── */
+    #main {
+      margin-left: 240px;
+      min-height: 100vh;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 60px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,255,170,0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(14,165,233,0.08) 0%, transparent 70%);
+    }
+
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 50px 50px;
+      mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    }
+
+    .hero-content { position: relative; max-width: 780px; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 18px;
+      background: rgba(0,255,170,0.08);
+      border: 1px solid rgba(0,255,170,0.25);
+      color: var(--green);
+      border-radius: 999px;
+      font-size: 11px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 32px;
+      animation: fadeUp .8s ease both;
+    }
+
+    .badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .4; transform: scale(.7); }
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -.02em;
+      color: var(--white);
+      margin-bottom: 12px;
+      animation: fadeUp .8s .1s ease both;
+    }
+
+    h1 .accent {
+      background: linear-gradient(135deg, var(--green) 0%, var(--blue) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+      font-size: 1.1rem;
+      color: #6b7fa3;
+      max-width: 560px;
+      margin: 20px auto 48px;
+      font-weight: 300;
+      animation: fadeUp .8s .2s ease both;
+    }
+
+    .hero-for {
+      display: inline-block;
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: #374561;
+      animation: fadeUp .8s .3s ease both;
+    }
+
+    .hero-for span { color: var(--green); }
+
+    /* ── SCROLL CTA ── */
+    .scroll-cta {
+      position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      color: #374561; font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+      animation: fadeUp .8s .6s ease both;
+    }
+
+    .scroll-arrow {
+      width: 20px; height: 20px;
+      border-right: 2px solid #374561;
+      border-bottom: 2px solid #374561;
+      transform: rotate(45deg);
+      animation: bounce 1.6s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: rotate(45deg) translateY(0); }
+      50% { transform: rotate(45deg) translateY(6px); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── SECTIONS ── */
+    .section {
+      padding: 90px 60px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-inner { max-width: 1000px; }
+
+    .section-tag {
+      font-size: 11px;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--green);
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .section-tag::after {
+      content: '';
+      height: 1px;
+      width: 40px;
+      background: var(--green);
+      opacity: .4;
+    }
+
+    h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -.02em;
+      margin-bottom: 12px;
+      line-height: 1.15;
+    }
+
+    .section-desc {
+      color: #6b7fa3;
+      font-size: 1rem;
+      max-width: 600px;
+      margin-bottom: 48px;
+      font-weight: 300;
+    }
+
+    /* ── CARDS ── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      margin-top: 36px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      transition: .25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,255,170,0.4), transparent);
+      opacity: 0;
+      transition: .25s;
+    }
+
+    .card:hover { transform: translateY(-6px); border-color: rgba(0,255,170,0.2); }
+    .card:hover::before { opacity: 1; }
+
+    .card-icon {
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      margin-bottom: 18px;
+      background: rgba(0,255,170,0.08);
+      border: 1px solid rgba(0,255,170,0.15);
+    }
+
+    .card h3 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--white);
+      margin-bottom: 10px;
+    }
+
+    .card p, .card li {
+      color: var(--text);
+      font-size: .9rem;
+      line-height: 1.65;
+    }
+
+    .card ul { padding-left: 16px; margin-top: 8px; }
+    .card li { margin-bottom: 6px; }
+
+    /* ── CARD VARIANTS ── */
+    .card.red .card-icon { background: rgba(255,71,87,0.08); border-color: rgba(255,71,87,0.2); }
+    .card.blue .card-icon { background: rgba(14,165,233,0.08); border-color: rgba(14,165,233,0.2); }
+
+    /* ── QUOTE ── */
+    .quote {
+      margin-top: 40px;
+      background: linear-gradient(135deg, rgba(0,255,170,0.06), rgba(14,165,233,0.06));
+      border: 1px solid rgba(0,255,170,0.15);
+      border-radius: 20px;
+      padding: 36px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .quote::before {
+      content: '"';
+      position: absolute;
+      top: -20px; left: 20px;
+      font-family: 'Syne', sans-serif;
+      font-size: 120px;
+      color: rgba(0,255,170,0.07);
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .quote p {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--white);
+      line-height: 1.5;
+      position: relative;
+    }
+
+    .quote-author {
+      margin-top: 14px;
+      font-size: .85rem;
+      color: var(--green);
+      font-weight: 500;
+      position: relative;
+    }
+
+    /* ── SCRIPT BOX ── */
+    .script-wrap { position: relative; margin-top: 32px; }
+
+    .script-box {
+      background: #060c18;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      color: #a8bcd8;
+      white-space: pre-line;
+      font-size: .92rem;
+      line-height: 1.9;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .script-box .tag {
+      display: inline-block;
+      background: rgba(0,255,170,0.1);
+      color: var(--green);
+      border-radius: 6px;
+      padding: 2px 10px;
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .script-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .script-label-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--white);
+    }
+
+    .script-label-badge {
+      font-size: 10px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: #374561;
+      border: 1px solid var(--border);
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+
+    .copy-btn {
+      position: absolute; top: 16px; right: 16px;
+      background: rgba(0,255,170,0.08);
+      border: 1px solid rgba(0,255,170,0.2);
+      color: var(--green);
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      transition: .2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    .copy-btn:hover { background: rgba(0,255,170,0.15); }
+    .copy-btn.copied { color: #00cc88; border-color: #00cc88; }
+
+    /* ── OBJECTION TABLE ── */
+    .obj-list { display: flex; flex-direction: column; gap: 16px; margin-top: 36px; }
+
+    .obj-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+    }
+
+    .obj-trigger {
+      padding: 22px 24px;
+      border-right: 1px solid var(--border);
+      background: rgba(255,71,87,0.04);
+    }
+
+    .obj-trigger-label {
+      font-size: 10px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .obj-trigger p {
+      font-family: 'Syne', sans-serif;
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--white);
+      font-style: italic;
+    }
+
+    .obj-response { padding: 22px 24px; }
+
+    .obj-response-label {
+      font-size: 10px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .obj-response p { font-size: .9rem; color: var(--text); }
+
+    /* ── RULES GRID ── */
+    .rules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 36px;
+    }
+
+    .rule-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: .2s;
+    }
+
+    .rule-card:hover { border-color: rgba(0,255,170,0.25); }
+
+    .rule-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      color: rgba(0,255,170,0.15);
+      line-height: 1;
+    }
+
+    .rule-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .rule-desc { font-size: .88rem; color: var(--text); }
+
+    /* ── VOICE SECTION ── */
+    .voice-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 36px;
+    }
+
+    .voice-card {
+      border-radius: 20px;
+      padding: 28px;
+      border: 1px solid var(--border);
+    }
+
+    .voice-card.do { background: rgba(0,255,170,0.04); border-color: rgba(0,255,170,0.15); }
+    .voice-card.dont { background: rgba(255,71,87,0.04); border-color: rgba(255,71,87,0.15); }
+
+    .voice-label {
+      font-family: 'Syne', sans-serif;
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .voice-card.do .voice-label { color: var(--green); }
+    .voice-card.dont .voice-label { color: var(--red); }
+
+    .voice-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      margin-bottom: 12px;
+      font-size: .9rem;
+      color: var(--text);
+    }
+
+    .voice-item-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      margin-top: 7px;
+      flex-shrink: 0;
+    }
+
+    .voice-card.do .voice-item-dot { background: var(--green); }
+    .voice-card.dont .voice-item-dot { background: var(--red); }
+
+    /* ── RITUAL SECTION ── */
+    .ritual-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 36px;
+      position: relative;
+    }
+
+    .ritual-steps::before {
+      content: '';
+      position: absolute;
+      left: 20px; top: 0; bottom: 0;
+      width: 1px;
+      background: linear-gradient(to bottom, var(--green), transparent);
+    }
+
+    .ritual-step {
+      display: flex; gap: 24px;
+      padding: 24px 0;
+      padding-left: 4px;
+    }
+
+    .ritual-step-num {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: rgba(0,255,170,0.1);
+      border: 1px solid rgba(0,255,170,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-size: .85rem;
+      font-weight: 800;
+      color: var(--green);
+      flex-shrink: 0;
+      position: relative; z-index: 1;
+    }
+
+    .ritual-step-content { padding-top: 6px; }
+
+    .ritual-step-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      color: var(--white);
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+
+    .ritual-step-desc { font-size: .9rem; color: var(--text); }
+
+    /* ── ERRORS SECTION ── */
+    .errors-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 36px;
+    }
+
+    .error-card {
+      background: rgba(255,71,87,0.04);
+      border: 1px solid rgba(255,71,87,0.12);
+      border-radius: 20px;
+      padding: 28px;
+      transition: .2s;
+    }
+
+    .error-card:hover { border-color: rgba(255,71,87,0.3); }
+
+    .error-icon { font-size: 24px; margin-bottom: 14px; }
+
+    .error-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #ff6b7a;
+      margin-bottom: 8px;
+    }
+
+    .error-desc { font-size: .88rem; color: var(--text); margin-bottom: 14px; }
+
+    .error-fix {
+      font-size: .85rem;
+      color: var(--green);
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .error-fix-label {
+      font-size: .75rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #00cc88;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    /* ── RECOVERY SECTION ── */
+    .recovery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 36px;
+    }
+
+    /* ── KPIs ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 20px;
+      margin-top: 36px;
+    }
+
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 24px;
+      text-align: center;
+      transition: .2s;
+    }
+
+    .kpi-card:hover { border-color: rgba(0,255,170,0.25); }
+
+    .kpi-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--green), var(--blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+
+    .kpi-label { font-size: .85rem; color: #6b7fa3; }
+    .kpi-note { font-size: .78rem; color: #374561; margin-top: 4px; }
+
+    /* ── TRAINING ── */
+    .training-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 36px;
+    }
+
+    .training-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+    }
+
+    .training-card h3 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--white);
+      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .training-time {
+      font-size: .75rem;
+      background: rgba(0,255,170,0.1);
+      color: var(--green);
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .training-card p { font-size: .9rem; color: var(--text); }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 60px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .footer-left {
+      font-family: 'Syne', sans-serif;
+      font-size: .9rem;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .footer-right { font-size: .85rem; color: #374561; }
+
+    .footer-tag {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: .78rem;
+      color: var(--green);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      border: none;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 0;
+    }
+
+    /* ── STEP FLOW ── */
+    .step-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0;
+      margin-top: 36px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .step-flow-item {
+      padding: 28px 24px;
+      border-right: 1px solid var(--border);
+      position: relative;
+    }
+
+    .step-flow-item:last-child { border-right: none; }
+
+    .step-flow-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: rgba(0,255,170,0.12);
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+
+    .step-flow-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 8px;
+      font-size: .95rem;
+    }
+
+    .step-flow-desc { font-size: .85rem; color: var(--text); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      #nav { transform: translateX(-100%); }
+      #nav.open { transform: translateX(0); }
+      #nav-toggle { display: block; }
+      #main { margin-left: 0; }
+      .section { padding: 70px 24px; }
+      footer { padding: 40px 24px; }
+      .voice-grid { grid-template-columns: 1fr; }
+      .obj-item { grid-template-columns: 1fr; }
+      .obj-trigger { border-right: none; border-bottom: 1px solid var(--border); }
+      .step-flow { grid-template-columns: 1fr; }
+      .step-flow-item { border-right: none; border-bottom: 1px solid var(--border); }
+      .step-flow-item:last-child { border-bottom: none; }
+    }
+
+    /* ── HIGHLIGHT TAG ── */
+    .hl { color: var(--green); font-weight: 600; }
+    .hl-blue { color: var(--blue); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<button id="nav-toggle" onclick="toggleNav()">☰</button>
+
+<!-- SIDEBAR -->
+<nav id="nav">
+  <div class="nav-logo">Closing Sécurité</div>
+  <div class="nav-links">
+    <div class="nav-section-label">Fondations</div>
+    <a href="#psychologie">Psychologie du closing</a>
+    <a href="#voix">La voix & le paraverbal</a>
+    <a href="#structure">Structure d'un appel</a>
+    <a href="#regles">Règles du closer élite</a>
+
+    <div class="nav-section-label">Scripts</div>
+    <a href="#script-ouverture">Script d'ouverture</a>
+    <a href="#maison-sans">Maison — sans équipement</a>
+    <a href="#maison-avec">Maison — déjà équipée</a>
+    <a href="#commerce-sans">Commerce — sans équipement</a>
+    <a href="#commerce-avec">Commerce — déjà équipé</a>
+
+    <div class="nav-section-label">Maîtrise</div>
+    <a href="#objections">Gestion des objections</a>
+    <a href="#recuperation">Récupérer un appel</a>
+    <a href="#erreurs">Erreurs classiques</a>
+    <a href="#ritual">Rituel pré-appel</a>
+    <a href="#kpis">KPIs & progression</a>
+    <a href="#entrainement">Entraînement quotidien</a>
+  </div>
+  <a href="annuaire_melina.html" class="nav-annuaire" target="_blank">
+    <span class="nav-annuaire-icon">📞</span>
+    Annuaire prospects
+    <span class="nav-annuaire-arrow">↗</span>
+  </a>
+  <a href="intro_closing_melina.html" class="nav-back">
+    ← Retour à l'accueil
+  </a>
+</nav>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-content">
+      <div class="badge"><span class="badge-dot"></span> E-Book Premium · Closing Téléphonique</div>
+      <h1>Devenir un<br><span class="accent">Monstre du Closing</span><br>dans la Sécurité</h1>
+      <p class="hero-sub">Maîtrise la psychologie, la voix, les scripts et les objections pour vendre des alarmes et des systèmes de vidéosurveillance haut de gamme.</p>
+      <div class="hero-for">Conçu pour <span>Mélina</span></div>
+    </div>
+    <div class="scroll-cta">
+      Commencer
+      <div class="scroll-arrow"></div>
+    </div>
+  </section>
+
+  <!-- PSYCHOLOGIE -->
+  <section class="section" id="psychologie">
+    <div class="section-inner">
+      <div class="section-tag">Fondation 01</div>
+      <h2>La vraie psychologie du closing</h2>
+      <p class="section-desc">Avant les scripts, il faut comprendre comment fonctionne la décision humaine. Ce n'est jamais rationnel en premier.</p>
+
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-icon">🔗</div>
+          <h3>Créer une connexion</h3>
+          <p>Les meilleurs closers ne récitent pas un texte. Ils donnent l'impression de vraiment comprendre la situation du prospect. Le rapport humain ouvre tout.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🧠</div>
+          <h3>Déclencher la prise de conscience</h3>
+          <p>Le vrai closing consiste à faire réaliser au prospect qu'un risque réel existe dans sa vie aujourd'hui — sans qu'il s'en soit jamais vraiment rendu compte.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🛡️</div>
+          <h3>Installer la confiance</h3>
+          <p>Un client achète rarement une caméra ou une alarme. Il achète la tranquillité d'esprit, la sérénité et le sentiment de contrôle sur ce qu'il aime.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">❤️</div>
+          <h3>Toucher l'émotion</h3>
+          <p>La peur de perdre est toujours plus forte que le désir de gagner. Fais imaginer l'absence de protection — jamais l'objet que tu vends.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🎯</div>
+          <h3>Un seul objectif à la fois</h3>
+          <p>Au téléphone, ton seul objectif est d'obtenir un rendez-vous. Pas de vendre une solution. Pas d'expliquer les prix. Juste le RDV.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🔄</div>
+          <h3>Toujours reformuler</h3>
+          <p>Répète les mots exacts du prospect. Il se sent compris, ça crée un lien fort. "Vous m'avez dit que… c'est bien ça ?" est une arme redoutable.</p>
+        </div>
+      </div>
+
+      <div class="quote">
+        <p>"Tu ne vends pas une alarme. Tu vends la sensation d'être protégé. Tu ne vends pas une caméra. Tu vends la paix d'esprit quand tu es absent."</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- VOIX & PARAVERBAL -->
+  <section class="section" id="voix">
+    <div class="section-inner">
+      <div class="section-tag">Fondation 02</div>
+      <h2>La voix & le paraverbal</h2>
+      <p class="section-desc">Au téléphone, 80% du message passe par ta voix — pas tes mots. C'est ce que la plupart des closers ne travaillent jamais.</p>
+
+      <div class="voice-grid">
+        <div class="voice-card do">
+          <div class="voice-label">✓ Ce qu'il faut faire</div>
+          <div class="voice-item"><span class="voice-item-dot"></span>Parler lentement — plus lentement que dans la vie normale</div>
+          <div class="voice-item"><span class="voice-item-dot"></span>Sourire physiquement quand tu parles — ça s'entend vraiment</div>
+          <div class="voice-item"><span class="voice-item-dot"></span>Baisser la voix sur les points importants (effet de confidence)</div>
+          <div class="voice-item"><span class="voice-item-dot"></span>Utiliser les silences — laisser ta question résonner</div>
+          <div class="voice-item"><span class="voice-item-dot"></span>Varier le rythme : ralentir pour les moments émotionnels</div>
+          <div class="voice-item"><span class="voice-item-dot"></span>Respirer calmement — ta respiration déteint sur le prospect</div>
+          <div class="voice-item"><span class="voice-item-dot"></span>Monter légèrement la voix en fin de proposition positive</div>
+        </div>
+        <div class="voice-card dont">
+          <div class="voice-label">✗ Ce qu'il faut éviter</div>
+          <div class="voice-item"><span class="voice-item-dot"></span>Parler trop vite — tu donnes une impression de stress</div>
+          <div class="voice-item"><span class="voice-item-dot"></span>Remplir les silences immédiatement — laisse le prospect penser</div>
+          <div class="voice-item"><span class="voice-item-dot"></span>Hausser la voix comme pour convaincre — ça met en défense</div>
+          <div class="voice-item"><span class="voice-item-dot"></span>Lire mécaniquement ton script — ça s'entend instantanément</div>
+          <div class="voice-item"><span class="voice-item-dot"></span>Poser deux questions d'un coup — tu perds le fil</div>
+          <div class="voice-item"><span class="voice-item-dot"></span>Couper la parole — même si tu vois la réponse venir</div>
+          <div class="voice-item"><span class="voice-item-dot"></span>Terminer les phrases en baissant la voix comme si tu t'excusais</div>
+        </div>
+      </div>
+
+      <div class="quote">
+        <p>"Enregistre-toi. Écoute-toi comme si tu entendais un inconnu. C'est le seul moyen honnête de voir ce que le prospect entend vraiment."</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- STRUCTURE -->
+  <section class="section" id="structure">
+    <div class="section-inner">
+      <div class="section-tag">Fondation 03</div>
+      <h2>Structure d'un appel puissant</h2>
+      <p class="section-desc">Chaque appel suit une mécanique précise. La maîtriser te permet d'improviser sans jamais te perdre.</p>
+
+      <div class="step-flow">
+        <div class="step-flow-item">
+          <div class="step-flow-num">01</div>
+          <div class="step-flow-title">Ouverture</div>
+          <div class="step-flow-desc">Faire baisser les défenses dans les 20 premières secondes. Ton énergie décide de la suite.</div>
+        </div>
+        <div class="step-flow-item">
+          <div class="step-flow-num">02</div>
+          <div class="step-flow-title">Qualification</div>
+          <div class="step-flow-desc">Découvrir la situation réelle : équipé ou pas, satisfait ou non, ses peurs et ses habitudes.</div>
+        </div>
+        <div class="step-flow-item">
+          <div class="step-flow-num">03</div>
+          <div class="step-flow-title">Prise de conscience</div>
+          <div class="step-flow-desc">Faire réaliser qu'un risque existe. Des questions qui font réfléchir, pas des affirmations.</div>
+        </div>
+        <div class="step-flow-item">
+          <div class="step-flow-num">04</div>
+          <div class="step-flow-title">Projection</div>
+          <div class="step-flow-desc">Faire imaginer la solution idéale dans sa propre tête. Il se convainc lui-même.</div>
+        </div>
+        <div class="step-flow-item">
+          <div class="step-flow-num">05</div>
+          <div class="step-flow-title">Rendez-vous</div>
+          <div class="step-flow-desc">Proposer avec naturel et assurance. Toujours donner deux choix de créneau.</div>
+        </div>
+      </div>
+
+      <div class="card-grid" style="margin-top:24px;">
+        <div class="card">
+          <div class="card-icon">❓</div>
+          <h3>Questions émotionnelles</h3>
+          <ul>
+            <li>"Qu'est-ce qui vous inquiéterait le plus en cas d'intrusion ?"</li>
+            <li>"Quand vous êtes absent, vous êtes totalement serein ?"</li>
+            <li>"Aujourd'hui vous vous sentez protégé à 100% ?"</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-icon">🔮</div>
+          <h3>Questions de projection</h3>
+          <ul>
+            <li>"Et si demain il se passe quelque chose…"</li>
+            <li>"Vous seriez alerté comment exactement ?"</li>
+            <li>"Dans l'idéal vous aimeriez voir quoi depuis votre téléphone ?"</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REGLES -->
+  <section class="section" id="regles">
+    <div class="section-inner">
+      <div class="section-tag">Fondation 04</div>
+      <h2>Les règles du closer élite</h2>
+      <p class="section-desc">Ces principes séparent ceux qui font des résultats de ceux qui font du volume inutile.</p>
+
+      <div class="rules-grid">
+        <div class="rule-card">
+          <div class="rule-num">01</div>
+          <div class="rule-title">Parler lentement</div>
+          <div class="rule-desc">Une voix calme inspire automatiquement la confiance. La lenteur = autorité.</div>
+        </div>
+        <div class="rule-card">
+          <div class="rule-num">02</div>
+          <div class="rule-title">Utiliser les silences</div>
+          <div class="rule-desc">Le silence pousse le prospect à réfléchir, à parler et souvent à se convaincre lui-même.</div>
+        </div>
+        <div class="rule-card">
+          <div class="rule-num">03</div>
+          <div class="rule-title">Écouter vraiment</div>
+          <div class="rule-desc">Le client doit parler au moins 60% du temps. Tes questions créent l'espace pour ça.</div>
+        </div>
+        <div class="rule-card">
+          <div class="rule-num">04</div>
+          <div class="rule-title">Ne jamais défendre le prix</div>
+          <div class="rule-desc">Dès que tu justifies le tarif, tu es en position de faiblesse. Recentre sur la valeur et la peur de ne rien faire.</div>
+        </div>
+        <div class="rule-card">
+          <div class="rule-num">05</div>
+          <div class="rule-title">Toujours deux choix de RDV</div>
+          <div class="rule-desc">"Plutôt matin ou fin de journée ?" — tu élimines le oui/non et tu crées un choix entre deux oui.</div>
+        </div>
+        <div class="rule-card">
+          <div class="rule-num">06</div>
+          <div class="rule-title">Ne jamais attaquer l'existant</div>
+          <div class="rule-desc">Si le prospect est équipé, valorise d'abord. Cherche les failles avec des questions, jamais des affirmations.</div>
+        </div>
+      </div>
+
+      <div class="quote">
+        <p>"Quand tu sembles vouloir aider, le prospect s'ouvre. Quand tu sembles vouloir vendre, il se ferme."</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCRIPT OUVERTURE -->
+  <section class="section" id="script-ouverture">
+    <div class="section-inner">
+      <div class="section-tag">Scripts 01</div>
+      <h2>Script d'ouverture universel</h2>
+      <p class="section-desc">La base de tout appel. Mémorise-le jusqu'à ce qu'il soit complètement naturel.</p>
+
+      <div class="script-wrap">
+        <button class="copy-btn" onclick="copyScript(this)">📋 Copier</button>
+        <div class="script-box">
+<span class="tag">Ouverture</span>
+Bonjour Monsieur/Madame [Nom], je suis Mélina de Cam&Co.
+
+Je vous appelle rapidement parce qu'on intervient actuellement dans votre secteur concernant la protection des habitations contre les intrusions.
+
+Je voulais simplement voir si vous étiez déjà équipé aujourd'hui ou pas encore ?
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAISON SANS -->
+  <section class="section" id="maison-sans">
+    <div class="section-inner">
+      <div class="section-tag">Scripts 02</div>
+      <h2>Maison — Sans équipement</h2>
+      <p class="section-desc">Objectif : créer rapidement une prise de conscience chez un prospect sans aucune protection.</p>
+
+      <div class="script-wrap">
+        <button class="copy-btn" onclick="copyScript(this)">📋 Copier</button>
+        <div class="script-box">
+<span class="tag">Ouverture</span>
+Bonjour Monsieur/Madame [Nom], je suis Mélina de Cam&Co.
+
+Je vous appelle rapidement parce qu'on intervient actuellement dans votre secteur concernant la protection des habitations contre les intrusions.
+
+Je voulais simplement voir si vous étiez déjà équipé aujourd'hui ou pas encore ?
+
+
+<span class="tag">Connexion</span>
+D'accord je vois.
+
+Et aujourd'hui quand vous êtes absent, vous êtes totalement serein ou vous avez parfois cette petite pensée de vérifier si tout va bien à la maison ?
+
+
+<span class="tag">Prise de conscience</span>
+Je comprends.
+
+Et imaginons qu'il se passe quelque chose pendant un week-end ou pendant des vacances…
+
+Aujourd'hui concrètement vous seriez alerté comment exactement ?
+
+
+<span class="tag">Douleur émotionnelle</span>
+Parce qu'en général ce qui inquiète le plus les gens ce n'est même pas forcément le vol.
+
+C'est surtout le fait de ne rien voir venir avant qu'il soit trop tard.
+
+
+<span class="tag">Projection</span>
+Dans l'idéal, vous aimeriez surtout :
+
+- recevoir une alerte immédiatement,
+- voir en direct depuis votre téléphone,
+- ou simplement être plus tranquille quand vous êtes absent ?
+
+
+<span class="tag">Transition</span>
+Je vois exactement.
+
+Et c'est justement là qu'il existe aujourd'hui des solutions très simples qui permettent vraiment de garder le contrôle à distance.
+
+
+<span class="tag">Rendez-vous</span>
+Le plus simple honnêtement ce serait qu'on regarde ça directement sur place.
+
+Comme ça je peux voir précisément les accès, les zones sensibles et surtout vous montrer ce qui serait réellement utile pour votre maison sans vous faire installer quelque chose d'inutile.
+
+Vous êtes plus disponible plutôt en fin de journée ou plutôt le matin généralement ?
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAISON AVEC -->
+  <section class="section" id="maison-avec">
+    <div class="section-inner">
+      <div class="section-tag">Scripts 03</div>
+      <h2>Maison — Déjà équipée</h2>
+      <p class="section-desc">Objectif : ne jamais attaquer l'installation actuelle. Chercher les failles et frustrations avec des questions.</p>
+
+      <div class="script-wrap">
+        <button class="copy-btn" onclick="copyScript(this)">📋 Copier</button>
+        <div class="script-box">
+<span class="tag">Ouverture</span>
+Bonjour Monsieur/Madame [Nom], je suis Mélina de Cam&Co.
+
+Je vous appelle rapidement parce qu'on intervient actuellement dans votre secteur concernant la sécurisation des habitations.
+
+Je voulais voir comment vous étiez équipé aujourd'hui de votre côté ?
+
+
+<span class="tag">Valorisation</span>
+Très bien.
+
+C'est déjà une bonne chose d'avoir prévu quelque chose.
+
+
+<span class="tag">Exploration</span>
+Et aujourd'hui honnêtement, vous êtes satisfait à 100% de votre installation ou il y a encore certaines choses que vous aimeriez améliorer ?
+
+
+<span class="tag">Faire parler</span>
+Par exemple :
+
+- la qualité des images,
+- les alertes,
+- la surveillance à distance,
+- les angles morts,
+- ou la simplicité d'utilisation ?
+
+
+<span class="tag">Prise de conscience</span>
+Je comprends.
+
+Et aujourd'hui si quelqu'un entre réellement chez vous pendant votre absence…
+
+Vous recevez une alerte immédiate ou vous découvrez ça après ?
+
+
+<span class="tag">Douleur intelligente</span>
+Parce qu'on voit souvent des installations qui existent déjà…
+
+mais qui finalement ne couvrent pas réellement les points sensibles.
+
+
+<span class="tag">Projection</span>
+Dans l'idéal, qu'est-ce que vous aimeriez améliorer pour vous sentir totalement serein ?
+
+
+<span class="tag">Rendez-vous</span>
+Le plus pertinent honnêtement ce serait qu'on regarde rapidement votre installation directement sur place.
+
+Comme ça je peux vous dire ce qui est déjà très bien et surtout voir s'il y a éventuellement quelques optimisations utiles.
+
+Le but ce n'est pas de tout changer inutilement.
+
+Vous êtes plus disponible plutôt en semaine en fin de journée ou plutôt le matin ?
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMERCE SANS -->
+  <section class="section" id="commerce-sans">
+    <div class="section-inner">
+      <div class="section-tag">Scripts 04</div>
+      <h2>Commerce — Sans équipement</h2>
+      <p class="section-desc">Objectif : créer une prise de conscience rapide sur les risques business concrets — pas seulement le vol.</p>
+
+      <div class="script-wrap">
+        <button class="copy-btn" onclick="copyScript(this)">📋 Copier</button>
+        <div class="script-box">
+<span class="tag">Ouverture</span>
+Bonjour Monsieur/Madame [Nom], Mélina de Cam&Co à l'appareil.
+
+Je vous appelle rapidement parce qu'on accompagne actuellement plusieurs commerces et entreprises dans votre secteur concernant la sécurisation intrusion et la surveillance vidéo.
+
+Je voulais simplement voir comment vous gérez ça aujourd'hui de votre côté ?
+
+
+<span class="tag">Connexion</span>
+D'accord je vois.
+
+Et aujourd'hui quand votre établissement est fermé, vous êtes totalement serein ou vous gardez quand même un œil régulièrement ?
+
+
+<span class="tag">Prise de conscience</span>
+Je comprends.
+
+Et imaginons qu'il se passe quelque chose pendant la nuit ou un week-end…
+
+Aujourd'hui vous seriez alerté comment exactement ?
+
+
+<span class="tag">Douleur business</span>
+Parce qu'en général ce qui impacte le plus un commerce ce n'est pas seulement le vol.
+
+C'est surtout :
+
+- l'arrêt d'activité,
+- les dégradations,
+- les pertes de matériel,
+- ou le fait de découvrir le problème trop tard.
+
+
+<span class="tag">Projection</span>
+Dans l'idéal, vous aimeriez surtout :
+
+- surveiller à distance,
+- recevoir des alertes en temps réel,
+- sécuriser certains accès,
+- ou simplement être plus tranquille quand le local est fermé ?
+
+
+<span class="tag">Transition</span>
+Je vois exactement.
+
+Et aujourd'hui il existe des solutions très simples qui permettent vraiment de garder le contrôle même à distance.
+
+
+<span class="tag">Rendez-vous</span>
+Le plus pertinent honnêtement ce serait qu'on fasse un passage rapide directement sur site.
+
+Comme ça je peux voir les accès sensibles, les éventuels points faibles et surtout vous montrer ce qui serait réellement utile selon votre activité.
+
+Le but ce n'est pas de vous vendre quelque chose d'inutile.
+
+Vous êtes plus disponible plutôt mardi ou jeudi généralement ?
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMERCE AVEC -->
+  <section class="section" id="commerce-avec">
+    <div class="section-inner">
+      <div class="section-tag">Scripts 05</div>
+      <h2>Commerce — Déjà équipé</h2>
+      <p class="section-desc">Objectif : détecter les frustrations et limites de l'installation actuelle sans jamais la critiquer directement.</p>
+
+      <div class="script-wrap">
+        <button class="copy-btn" onclick="copyScript(this)">📋 Copier</button>
+        <div class="script-box">
+<span class="tag">Ouverture</span>
+Bonjour Monsieur/Madame [Nom], Mélina de Cam&Co à l'appareil.
+
+Je vous appelle rapidement parce qu'on intervient actuellement auprès de plusieurs commerces dans votre secteur concernant la sécurisation intrusion et la vidéosurveillance.
+
+Je voulais voir comment vous étiez équipé aujourd'hui de votre côté ?
+
+
+<span class="tag">Valorisation</span>
+Très bien.
+
+C'est déjà une bonne chose d'avoir prévu une installation.
+
+
+<span class="tag">Exploration</span>
+Et aujourd'hui honnêtement, vous êtes satisfait à 100% de votre système ou il y a encore certains points que vous aimeriez améliorer ?
+
+
+<span class="tag">Faire parler</span>
+Par exemple :
+
+- les alertes,
+- les accès sensibles,
+- la qualité des images,
+- les angles morts,
+- ou la surveillance à distance ?
+
+
+<span class="tag">Prise de conscience</span>
+Je comprends.
+
+Et aujourd'hui si une intrusion se produit pendant la fermeture…
+
+Vous êtes alerté immédiatement ou vous découvrez ça après coup ?
+
+
+<span class="tag">Douleur business</span>
+Parce qu'on voit souvent des commerces déjà équipés…
+
+mais avec certaines zones non couvertes ou des systèmes qui ne sont plus vraiment adaptés à l'activité actuelle.
+
+
+<span class="tag">Projection</span>
+Dans l'idéal aujourd'hui, qu'est-ce que vous aimeriez améliorer pour être totalement serein ?
+
+
+<span class="tag">Rendez-vous</span>
+Le plus pertinent honnêtement ce serait qu'on fasse un passage rapide directement sur site.
+
+Comme ça je peux regarder votre installation actuelle, vous dire ce qui est déjà très bien et surtout voir s'il existe quelques optimisations utiles.
+
+Le but ce n'est pas de tout remplacer inutilement.
+
+Vous êtes plus disponible plutôt en matinée ou en fin de journée généralement ?
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OBJECTIONS -->
+  <section class="section" id="objections">
+    <div class="section-inner">
+      <div class="section-tag">Maîtrise 01</div>
+      <h2>Gestion des objections</h2>
+      <p class="section-desc">Les objections ne sont pas des refus — ce sont des questions déguisées. Voici comment les transformer.</p>
+
+      <div class="obj-list">
+        <div class="obj-item">
+          <div class="obj-trigger">
+            <div class="obj-trigger-label">Objection</div>
+            <p>"C'est trop cher"</p>
+          </div>
+          <div class="obj-response">
+            <div class="obj-response-label">Réponse</div>
+            <p>"Je comprends. Après, la vraie question c'est surtout : combien coûterait une intrusion si rien n'était prévu ? Le coût de ne rien faire est souvent bien plus élevé."</p>
+          </div>
+        </div>
+
+        <div class="obj-item">
+          <div class="obj-trigger">
+            <div class="obj-trigger-label">Objection</div>
+            <p>"Je dois réfléchir"</p>
+          </div>
+          <div class="obj-response">
+            <div class="obj-response-label">Réponse</div>
+            <p>"Bien sûr, c'est normal. Quand vous dites réfléchir, c'est surtout sur le budget ou sur le besoin réel ? [écouter] Je comprends — c'est justement pour ça que le passage sur place est utile, il n'engage à rien."</p>
+          </div>
+        </div>
+
+        <div class="obj-item">
+          <div class="obj-trigger">
+            <div class="obj-trigger-label">Objection</div>
+            <p>"Je suis déjà équipé"</p>
+          </div>
+          <div class="obj-response">
+            <div class="obj-response-label">Réponse</div>
+            <p>"Très bien, c'est déjà une bonne chose. Et aujourd'hui vous êtes satisfait à 100% ou il y a encore certains points que vous aimeriez améliorer ?" [basculer vers script équipé]</p>
+          </div>
+        </div>
+
+        <div class="obj-item">
+          <div class="obj-trigger">
+            <div class="obj-trigger-label">Objection</div>
+            <p>"J'ai pas le temps là"</p>
+          </div>
+          <div class="obj-response">
+            <div class="obj-response-label">Réponse</div>
+            <p>"Pas de souci du tout, je fais court. Juste une question avant qu'on se rappelle : aujourd'hui vous êtes équipé ou pas encore ? [réponse] Parfait — je vous rappelle quand c'est mieux, plutôt demain matin ou en fin de journée ?"</p>
+          </div>
+        </div>
+
+        <div class="obj-item">
+          <div class="obj-trigger">
+            <div class="obj-trigger-label">Objection</div>
+            <p>"Envoyez-moi un email"</p>
+          </div>
+          <div class="obj-response">
+            <div class="obj-response-label">Réponse</div>
+            <p>"Je peux tout à fait faire ça. Mais honnêtement, par mail je ne peux pas voir votre configuration. C'est pour ça qu'un passage rapide sur place est beaucoup plus utile — 20 minutes, ça vous coûte rien et vous repartez avec une vraie vision."</p>
+          </div>
+        </div>
+
+        <div class="obj-item">
+          <div class="obj-trigger">
+            <div class="obj-trigger-label">Objection</div>
+            <p>"Mon conjoint décide avec moi"</p>
+          </div>
+          <div class="obj-response">
+            <div class="obj-response-label">Réponse</div>
+            <p>"C'est tout à fait normal, c'est une décision importante. Et justement, c'est pour ça que le rendez-vous sur place est intéressant — comme ça vous pouvez tous les deux voir concrètement ce dont vous avez besoin. Vous êtes plus disponibles tous les deux plutôt le soir ou le week-end ?"</p>
+          </div>
+        </div>
+
+        <div class="obj-item">
+          <div class="obj-trigger">
+            <div class="obj-trigger-label">Objection</div>
+            <p>"J'ai déjà été démarché"</p>
+          </div>
+          <div class="obj-response">
+            <div class="obj-response-label">Réponse</div>
+            <p>"Je comprends, c'est normal dans ce secteur. Est-ce que vous avez eu un rendez-vous ou juste un appel ? [réponse] La différence avec nous c'est qu'on intervient vraiment sur site — pas pour vendre un catalogue, mais pour voir ce qui est réellement utile chez vous spécifiquement."</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RÉCUPÉRATION -->
+  <section class="section" id="recuperation">
+    <div class="section-inner">
+      <div class="section-tag">Maîtrise 02</div>
+      <h2>Récupérer un appel qui part en fumée</h2>
+      <p class="section-desc">Quand le prospect devient froid ou cherche à raccrocher, tu as encore une fenêtre. Il faut la saisir avec calme.</p>
+
+      <div class="recovery-grid">
+        <div class="card">
+          <div class="card-icon">🌡️</div>
+          <h3>Le prospect devient froid</h3>
+          <p>Arrête de pousser. Marque une pause. Puis dis sobrement :<br><br>"Je sens que c'est peut-être pas le bon moment. Je veux pas vous déranger. Juste une dernière chose avant qu'on se quitte : aujourd'hui si quelque chose arrivait, vous seriez alerté comment ?"<br><br>Repose une seule question émotionnelle. Laisse le silence travailler.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">🚪</div>
+          <h3>Il veut raccrocher</h3>
+          <p>Ne résiste pas — c'est contre-productif. Dis :<br><br>"Pas de problème du tout. Je vous rappelle à un meilleur moment — vous préférez que je vous rappelle plutôt en début ou en fin de semaine ?"<br><br>Tu reprends le contrôle du prochain contact au lieu de perdre l'échange.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">🔁</div>
+          <h3>Il répond par monosyllabes</h3>
+          <p>C'est souvent de la méfiance, pas du désintérêt. Change de registre :<br><br>"Je vais être direct avec vous — je ne cherche pas à vous vendre quelque chose tout de suite. Je voudrais juste comprendre comment vous êtes organisé."<br><br>La transparence brise la méfiance.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">⚓</div>
+          <h3>L'ancre de sortie</h3>
+          <p>Si l'appel est vraiment perdu, ne raccroche pas sans planter une graine :<br><br>"Je note votre numéro de toute façon. On intervient régulièrement dans votre secteur — si jamais vous entendez parler d'une intrusion dans le quartier, pensez à nous."<br><br>Tu restes présent sans forcer.</p>
+        </div>
+      </div>
+
+      <div class="quote">
+        <p>"Un appel perdu avec classe vaut mieux qu'un appel gagné à l'arrachée. Le prospect peut te rappeler — mais seulement si tu lui as laissé une bonne impression."</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ERREURS CLASSIQUES -->
+  <section class="section" id="erreurs">
+    <div class="section-inner">
+      <div class="section-tag">Maîtrise 03</div>
+      <h2>Erreurs classiques du débutant</h2>
+      <p class="section-desc">Ces erreurs coûtent des RDVs chaque jour. Les identifier, c'est déjà les éviter à moitié.</p>
+
+      <div class="errors-grid">
+        <div class="error-card">
+          <div class="error-icon">💨</div>
+          <div class="error-title">Parler trop vite</div>
+          <div class="error-desc">Le stress se transforme en débit rapide. Le prospect ressent que tu as peur de perdre son attention. Résultat : il décroche mentalement.</div>
+          <div class="error-fix">
+            <div class="error-fix-label">✓ La solution</div>
+            Ralentis volontairement. Mets des pauses après chaque phrase importante. Le silence est confortable — c'est toi qui dois l'intégrer en premier.
+          </div>
+        </div>
+
+        <div class="error-card">
+          <div class="error-icon">🏷️</div>
+          <div class="error-title">Justifier le prix trop tôt</div>
+          <div class="error-desc">Mentionner les prix ou les offres avant d'avoir créé le besoin, c'est mettre la charrue avant les bœufs. Le prospect compare avant d'avoir voulu.</div>
+          <div class="error-fix">
+            <div class="error-fix-label">✓ La solution</div>
+            Aucun prix au téléphone. L'objectif est le RDV. Si on te demande le prix, dis : "C'est vraiment variable selon votre configuration — c'est pour ça qu'un passage sur place est utile."
+          </div>
+        </div>
+
+        <div class="error-card">
+          <div class="error-icon">❓</div>
+          <div class="error-title">Deux questions d'un coup</div>
+          <div class="error-desc">"Vous avez une alarme et des caméras ?" Le prospect ne sait pas quoi répondre, choisit la plus facile, et tu perds la moitié de l'information.</div>
+          <div class="error-fix">
+            <div class="error-fix-label">✓ La solution</div>
+            Une seule question à la fois. Toujours. Attends la réponse complète avant de continuer. Le silence après une question est normal — ne le comble pas.
+          </div>
+        </div>
+
+        <div class="error-card">
+          <div class="error-icon">📖</div>
+          <div class="error-title">Réciter mécaniquement</div>
+          <div class="error-desc">Ça s'entend immédiatement. Le prospect se sent comme un numéro sur une liste. La connexion est impossible si tu lis ton script mot pour mot.</div>
+          <div class="error-fix">
+            <div class="error-fix-label">✓ La solution</div>
+            Apprends la structure, pas les mots exacts. Répète jusqu'à l'oublier. L'objectif est d'intégrer la logique pour improviser naturellement dans chaque étape.
+          </div>
+        </div>
+
+        <div class="error-card">
+          <div class="error-icon">🔊</div>
+          <div class="error-title">Ne pas utiliser les silences</div>
+          <div class="error-desc">Remplir chaque blanc immédiatement par peur du vide. Le silence fait peur au débutant — mais c'est lui qui fait parler le prospect.</div>
+          <div class="error-fix">
+            <div class="error-fix-label">✓ La solution</div>
+            Après une question émotionnelle forte, tais-toi. Compte mentalement jusqu'à 3. Le prospect va parler. Et ce qu'il dira sera de l'or pour la suite de l'appel.
+          </div>
+        </div>
+
+        <div class="error-card">
+          <div class="error-icon">🛡️</div>
+          <div class="error-title">Se défendre face aux objections</div>
+          <div class="error-desc">Argumenter contre une objection met le prospect en mode confrontation. Il va durcir sa position au lieu de s'ouvrir.</div>
+          <div class="error-fix">
+            <div class="error-fix-label">✓ La solution</div>
+            Valide d'abord. "Je comprends tout à fait." Puis retourne avec une question. Jamais un argument. La question fait travailler le prospect contre ses propres freins.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RITUEL PRÉ-APPEL -->
+  <section class="section" id="ritual">
+    <div class="section-inner">
+      <div class="section-tag">Maîtrise 04</div>
+      <h2>Rituel pré-appel</h2>
+      <p class="section-desc">Ton état interne avant le premier appel de la journée détermine souvent tes résultats. Ne laisse pas ça au hasard.</p>
+
+      <div class="ritual-steps">
+        <div class="ritual-step">
+          <div class="ritual-step-num">1</div>
+          <div class="ritual-step-content">
+            <div class="ritual-step-title">Respiration consciente (2 min)</div>
+            <div class="ritual-step-desc">4 secondes d'inspiration, 4 de rétention, 4 d'expiration. Répète 6 fois. Ça baisse le cortisol et installe une voix naturellement plus grave et calme.</div>
+          </div>
+        </div>
+        <div class="ritual-step">
+          <div class="ritual-step-num">2</div>
+          <div class="ritual-step-content">
+            <div class="ritual-step-title">Revue du dernier succès (1 min)</div>
+            <div class="ritual-step-desc">Rappelle-toi du dernier RDV décroché. Revois l'échange, la fluidité, la réponse du prospect. Tu reprogrammes ton cerveau dans un état de réussite avant de commencer.</div>
+          </div>
+        </div>
+        <div class="ritual-step">
+          <div class="ritual-step-num">3</div>
+          <div class="ritual-step-content">
+            <div class="ritual-step-title">Lecture à voix haute du script (5 min)</div>
+            <div class="ritual-step-desc">Lis ton script d'ouverture à voix haute — pas dans ta tête. Tu conditionnes ta voix, ton rythme et tes transitions. La première phrase du jour doit être fluide avant le premier vrai appel.</div>
+          </div>
+        </div>
+        <div class="ritual-step">
+          <div class="ritual-step-num">4</div>
+          <div class="ritual-step-content">
+            <div class="ritual-step-title">Sourire physique avant de décrocher</div>
+            <div class="ritual-step-desc">Souris physiquement avant de composer le numéro. Ton visage influence directement ta voix. C'est prouvé — un sourire s'entend au téléphone et crée immédiatement plus de réceptivité chez l'interlocuteur.</div>
+          </div>
+        </div>
+        <div class="ritual-step">
+          <div class="ritual-step-num">5</div>
+          <div class="ritual-step-content">
+            <div class="ritual-step-title">L'intention juste avant de parler</div>
+            <div class="ritual-step-desc">Rappelle-toi que ton rôle n'est pas de vendre. C'est d'aider ce prospect à comprendre s'il est vraiment protégé. Si tu crois vraiment que ton produit protège des gens, ta conviction sera audible.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="quote">
+        <p>"Un closer dangereux n'est pas celui qui parle le mieux. C'est celui qui maîtrise ses émotions et comprend celles du prospect."</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPIs -->
+  <section class="section" id="kpis">
+    <div class="section-inner">
+      <div class="section-tag">Maîtrise 05</div>
+      <h2>KPIs & mesure de progression</h2>
+      <p class="section-desc">Ce qui ne se mesure pas ne s'améliore pas. Voici les indicateurs qui comptent vraiment dans ce métier.</p>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-num">30–50</div>
+          <div class="kpi-label">Appels par jour</div>
+          <div class="kpi-note">Volume minimum pour progresser vite</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-num">15–20%</div>
+          <div class="kpi-label">Taux de joignabilité</div>
+          <div class="kpi-note">Quelqu'un répond / appels passés</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-num">1/8</div>
+          <div class="kpi-label">Appels → RDV</div>
+          <div class="kpi-note">1 RDV pour 8 prospects joignables (objectif débutant)</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-num">1/4</div>
+          <div class="kpi-label">Appels → RDV</div>
+          <div class="kpi-note">Cible closer confirmé après 3 mois</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-num">&lt; 90s</div>
+          <div class="kpi-label">Temps avant qualification</div>
+          <div class="kpi-note">Si tu n'as pas la situation en 90s, ça décroche</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-num">60%</div>
+          <div class="kpi-label">Parole prospect</div>
+          <div class="kpi-note">Le prospect doit parler plus que toi</div>
+        </div>
+      </div>
+
+      <div class="card-grid" style="margin-top:28px;">
+        <div class="card">
+          <div class="card-icon">📊</div>
+          <h3>Ce qu'il faut tracker chaque jour</h3>
+          <ul>
+            <li>Nombre d'appels passés</li>
+            <li>Nombre de prospects joignables</li>
+            <li>Nombre de RDVs décrochés</li>
+            <li>Objections rencontrées (pour les travailler)</li>
+            <li>Durée moyenne des appels aboutis</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-icon">📈</div>
+          <h3>Comment progresser vite</h3>
+          <ul>
+            <li>Écoute 3 de tes appels enregistrés par semaine</li>
+            <li>Note l'objection qui te bloque le plus ce mois-ci</li>
+            <li>Travaille spécifiquement cette objection pendant une semaine</li>
+            <li>Compare tes KPIs semaine par semaine, pas jour par jour</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ENTRAÎNEMENT -->
+  <section class="section" id="entrainement">
+    <div class="section-inner">
+      <div class="section-tag">Maîtrise 06</div>
+      <h2>Entraînement quotidien</h2>
+      <p class="section-desc">La différence entre un bon closer et un excellent closer, c'est la qualité de l'entraînement hors-appels.</p>
+
+      <div class="training-grid">
+        <div class="training-card">
+          <h3>Lecture à voix haute <span class="training-time">15 min</span></h3>
+          <p>Répète chaque script lentement à voix haute. Le but n'est pas de mémoriser les mots mais d'intégrer le rythme, les silences et la logique émotionnelle.</p>
+        </div>
+        <div class="training-card">
+          <h3>Enregistrement & écoute <span class="training-time">10 min</span></h3>
+          <p>Enregistre-toi sur un script complet. Écoute avec l'oreille d'un inconnu : ton énergie, tes silences, le sourire dans ta voix, et les mots que tu répètes trop.</p>
+        </div>
+        <div class="training-card">
+          <h3>Drill objections <span class="training-time">10 min</span></h3>
+          <p>Prends une objection. Réponds 10 fois de façon différente jusqu'à trouver tes 2-3 formulations naturelles. L'objectif : répondre calmement sans réfléchir.</p>
+        </div>
+        <div class="training-card">
+          <h3>Jeu de rôle inversé <span class="training-time">15 min</span></h3>
+          <p>Joue le prospect difficile. Fais-toi closer par quelqu'un d'autre ou enregistre les deux rôles toi-même. Comprendre comment on se sent de l'autre côté change tout.</p>
+        </div>
+        <div class="training-card">
+          <h3>Revue hebdomadaire <span class="training-time">20 min</span></h3>
+          <p>Chaque vendredi : analyse tes KPIs de la semaine, note ce qui a fonctionné, identifie le point à améliorer la semaine suivante. Un focus par semaine maximum.</p>
+        </div>
+        <div class="training-card">
+          <h3>Veille terrain <span class="training-time">5 min</span></h3>
+          <p>Lis un fait divers local sur une intrusion ou cambriolage chaque matin. Ça maintient ta conviction que ce que tu vends protège vraiment des gens — et ça s'entend dans la voix.</p>
+        </div>
+      </div>
+
+      <div class="quote">
+        <p>"Tu n'es pas en train d'apprendre des scripts. Tu es en train de construire un instinct. Et les instincts se construisent dans la répétition patiente, pas dans l'urgence."</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-left">
+      Devenir un Monstre du Closing
+      <div class="footer-tag">Pour Mélina · Sécurité & Surveillance · 2026</div>
+    </div>
+    <div class="footer-right">E-Book Premium · Closing Téléphonique</div>
+  </footer>
+
+</div>
+
+<script>
+  // Progress bar
+  window.addEventListener('scroll', () => {
+    const scrollTop = document.documentElement.scrollTop;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = (scrollTop / docHeight) * 100;
+    document.getElementById('progress-bar').style.width = pct + '%';
+  });
+
+  // Active nav highlight
+  const sections = document.querySelectorAll('section[id], div.section[id]');
+  const navLinks = document.querySelectorAll('#nav .nav-links a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(link => {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id);
+        });
+      }
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('[id]').forEach(el => observer.observe(el));
+
+  // Copy script buttons
+  function copyScript(btn) {
+    const box = btn.nextElementSibling;
+    const text = box.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✓ Copié !';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = '📋 Copier';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+
+  // Mobile nav toggle
+  function toggleNav() {
+    document.getElementById('nav').classList.toggle('open');
+  }
+
+  // Close nav on link click (mobile)
+  navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      document.getElementById('nav').classList.remove('open');
+    });
+  });
+</script>
+
+</body>
+</html>
